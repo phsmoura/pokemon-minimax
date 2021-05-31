@@ -1,26 +1,10 @@
-from random import randint, choice
-from pokemon import Pokemon, PokemonAI
-from trainer import Trainer
+from trainer import Trainer, Player
+from pokemon import Pokemon
 from data.pokemon_db import pokemons as pokemon_db
 
 
-
-def generate_pokemon():
-    pkmn_randomized = choice(list(pokemon_db.keys()))
-    moveset = list()
-     
-    while len(moveset) < 4:
-        moveset.append(choice(pokemon_db[pkmn_randomized]['moves']))
-        moveset = list(set(moveset))
-    
-    return Pokemon(
-                pokemon_db[pkmn_randomized],
-                randint(45,60),
-                moveset
-            )
-
-def main():
-    red = {
+TEAM = {
+    'red': {
         'name': 'Red',
         'team': [
             Pokemon(
@@ -34,13 +18,13 @@ def main():
                 ]
             ),
             Pokemon(
-                pokemon_db['steelix'],
+                pokemon_db['snorlax'],
                 50,
                 [ 
-                    pokemon_db['steelix']['moves'][pokemon_db['steelix']['moves'].index('dig')],
-                    pokemon_db['steelix']['moves'][pokemon_db['steelix']['moves'].index('iron-tail')],
-                    pokemon_db['steelix']['moves'][pokemon_db['steelix']['moves'].index('rock-slide')],
-                    pokemon_db['steelix']['moves'][pokemon_db['steelix']['moves'].index('earthquake')]
+                    pokemon_db['snorlax']['moves'][pokemon_db['snorlax']['moves'].index('earthquake')],
+                    pokemon_db['snorlax']['moves'][pokemon_db['snorlax']['moves'].index('ice-punch')],
+                    pokemon_db['snorlax']['moves'][pokemon_db['snorlax']['moves'].index('thunder-punch')],
+                    pokemon_db['snorlax']['moves'][pokemon_db['snorlax']['moves'].index('fire-punch')]
                 ]
             ),
             Pokemon(
@@ -54,16 +38,15 @@ def main():
                 ]
             ),
         ]
-    }
-
-    blue = {
+    },
+    'blue': {
         'name': 'Blue',
         'team': [
             Pokemon(
                 pokemon_db['blastoise'],
                 50,
                 [ 
-                    pokemon_db['blastoise']['moves'][pokemon_db['blastoise']['moves'].index('earthquake')],
+                    pokemon_db['blastoise']['moves'][pokemon_db['blastoise']['moves'].index('ice-beam')],
                     pokemon_db['blastoise']['moves'][pokemon_db['blastoise']['moves'].index('hydro-pump')],
                     pokemon_db['blastoise']['moves'][pokemon_db['blastoise']['moves'].index('bite')],
                     pokemon_db['blastoise']['moves'][pokemon_db['blastoise']['moves'].index('blizzard')]
@@ -80,23 +63,26 @@ def main():
                 ]
             ),
             Pokemon(
-                pokemon_db['jolteon'],
+                pokemon_db['rhydon'],
                 50,
                 [ 
-                    pokemon_db['jolteon']['moves'][pokemon_db['jolteon']['moves'].index('quick-attack')],
-                    pokemon_db['jolteon']['moves'][pokemon_db['jolteon']['moves'].index('shadow-ball')],
-                    pokemon_db['jolteon']['moves'][pokemon_db['jolteon']['moves'].index('double-kick')],
-                    pokemon_db['jolteon']['moves'][pokemon_db['jolteon']['moves'].index('thunder')]
+                    pokemon_db['rhydon']['moves'][pokemon_db['rhydon']['moves'].index('rock-slide')],
+                    pokemon_db['rhydon']['moves'][pokemon_db['rhydon']['moves'].index('megahorn')],
+                    pokemon_db['rhydon']['moves'][pokemon_db['rhydon']['moves'].index('brick-break')],
+                    pokemon_db['rhydon']['moves'][pokemon_db['rhydon']['moves'].index('thunderbolt')]
                 ]
             ),
         ]
-    }
-    
-    red = Trainer(red)
-    blue = Trainer(blue)
+    },
+}
 
-    result = red.trainer_battle(blue)
+def main():
+    player = Player(TEAM['red']['name'], TEAM['red']['team'])
+    ai = Trainer(TEAM['blue']['name'], TEAM['blue']['team'])
+
+    result = ai.main_battle(player)
     print(result)
+
 
 
 if __name__ == '__main__':
