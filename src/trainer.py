@@ -2,7 +2,7 @@ from math import floor
 from random import choice, randint
 from minimax import Node
 from data.moves_db import moves as moves_db
-from util import get_effective_factor
+from util import get_effective_factor, get_damage
 
 
 class Trainer:
@@ -57,19 +57,9 @@ class Trainer:
         move_chosen = moves_db[first.moves[self.current_move]]['name']
         
         effective_factor = get_effective_factor(move_type, second.types)
-        # print(effective_factor)
+        second.hp -= get_damage(move_category, move_power, first, second, effective_factor)
 
-        if move_category[:3] == 'phy':
-            damage = floor((((2 * first.level/5) + 20 * move_power * first.attack/50) / second.defense) + 2) * effective_factor
-        elif move_category[:3] == 'spe':
-            damage = floor((((2 * first.level/5) + 20 * move_power * first.spatk/50) / second.spdef) + 2) * effective_factor
-
-        if damage <= 0:
-            damage = 1
-
-        second.hp -= damage
-
-        print(f"{first.name} used {move_chosen} and caused {damage} points of damage!")
+        print(f"{first.name} used {move_chosen} and caused {second.hp_full - second.hp} points of damage!")
         if effective_factor >= 2:
             print("This move was super effective...\n")
         elif effective_factor == 0.5:
@@ -87,7 +77,7 @@ class Trainer:
         opponent.print_team(0)
 
         print(f"{self.name} sent out {self.current_pkmn.name}!")
-        print(f"Go {opponent.current_pkmn.name}!")
+        print(f"Go {opponent.current_pkmn.name}!\n")
 
         while True:
             self.current_pkmn.print_battle()
@@ -176,7 +166,7 @@ class Player(Trainer):
             pkmn_index = int(input(f'Choose your pkmn [0-{len(self.team) - 1}]: '))
             self.current_pkmn = self.team[pkmn_index]
         
-        print(f"Go {self.current_pkmn.name}!")
+        print(f"\nGo {self.current_pkmn.name}!")
 
     def battle_menu(self):
         if len(self.team) == 1:
