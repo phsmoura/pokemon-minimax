@@ -1,7 +1,8 @@
 from math import floor
 from random import choice, randint
+from minimax import Node
 from data.moves_db import moves as moves_db
-from data.type_matrix import type_matrix
+from util import get_effective_factor
 
 
 class Trainer:
@@ -11,9 +12,6 @@ class Trainer:
         self.current_pkmn = team[0]
         self.current_move = 100
         self.atk_this_turn = True
-
-        self.score = 0
-        self.total_score = 0
 
     def print_team(self, k):
         print(f"{self.name}\'s team:")
@@ -25,6 +23,7 @@ class Trainer:
 
     def choose_move(self):
         self.current_move = randint(0,3)
+        # self.current_pkmn = self.current_position.data['move']
 
     def change_pokemon(self):
         if self.current_pkmn.hp > 0:
@@ -34,11 +33,14 @@ class Trainer:
         else:
             self.current_pkmn = choice(self.team)
 
+        # self.current_pkmn = self.current_position.data['current_pkmn']
+
         print(f"{self.name} sent out {self.current_pkmn.name}!")
 
     def battle_menu(self):
         call = {0: self.choose_move, 1: self.change_pokemon}
         opt = randint(0,1)
+        # opt = self.current_position.data['change_pkmn']
 
         if len(self.team) == 1:
             opt = 0
@@ -47,16 +49,6 @@ class Trainer:
             self.atk_this_turn = False
 
         call[opt]()
-
-    def get_effective_factor(self, atk_type:str, def_types:list) -> int:
-        atk_factor = type_matrix['header'].index(atk_type[:3])
-        effective_factor = 1
-
-        for def_type in def_types:
-            def_factor = type_matrix['header'].index(def_type[:3])
-            effective_factor *= type_matrix['matrix'][atk_factor][def_factor]
-
-        return int(effective_factor)
     
     def pokemon_battle(self, first, second):
         move_type = moves_db[first.moves[self.current_move]]['type']
@@ -64,7 +56,7 @@ class Trainer:
         move_power = moves_db[first.moves[self.current_move]]['power']
         move_chosen = moves_db[first.moves[self.current_move]]['name']
         
-        effective_factor = self.get_effective_factor(move_type, second.types)
+        effective_factor = get_effective_factor(move_type, second.types)
         # print(effective_factor)
 
         if move_category[:3] == 'phy':
@@ -108,8 +100,6 @@ class Trainer:
             opponent.battle_menu()
 
             if not self.atk_this_turn and opponent.atk_this_turn:
-                opponent.score += 1
-                self.score -= 1
                 if opponent.pokemon_battle(opponent.current_pkmn, self.current_pkmn):
                     opponent.score += 10
                     self.team.remove(self.current_pkmn)
@@ -118,8 +108,6 @@ class Trainer:
                     self.change_pokemon()
 
             elif not opponent.atk_this_turn and self.atk_this_turn:
-                self.score += 1
-                opponent.score -= 1
                 if self.pokemon_battle(self.current_pkmn, opponent.current_pkmn):
                     self.score += 10
                     opponent.team.remove(opponent.current_pkmn)
@@ -129,11 +117,8 @@ class Trainer:
 
             elif self.atk_this_turn and opponent.atk_this_turn:
                 if self.current_pkmn.speed > opponent.current_pkmn.speed:
-                    self.score += 1
-                    opponent.score -= 1
 
                     if self.pokemon_battle(self.current_pkmn, opponent.current_pkmn):
-                        self.score += 10
                         opponent.team.remove(opponent.current_pkmn)
                         if not(opponent.team):
                             return "You lose" 
@@ -142,18 +127,14 @@ class Trainer:
                     
                     if opponent.atk_this_turn:
                         if opponent.pokemon_battle(opponent.current_pkmn, self.current_pkmn):
-                            opponent.score += 10
                             self.team.remove(self.current_pkmn)
                             if not(self.team):
                                 return "You win" 
                             self.change_pokemon()
 
                 else:
-                    opponent.score += 1
-                    self.score -= 1
 
                     if opponent.pokemon_battle(opponent.current_pkmn, self.current_pkmn):
-                        opponent.score += 10
                         self.team.remove(self.current_pkmn)
                         if not(self.team):
                             return "You win" 
@@ -162,7 +143,6 @@ class Trainer:
 
                     if self.atk_this_turn:
                         if self.pokemon_battle(self.current_pkmn, opponent.current_pkmn):
-                            self.score += 10
                             opponent.team.remove(opponent.current_pkmn)
                             if not(opponent.team):
                                 return "You lose" 
