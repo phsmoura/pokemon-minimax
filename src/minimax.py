@@ -1,4 +1,5 @@
 from util import get_effective_factor, get_damage
+from pokemon import Pokemon
 from data.moves_db import moves as moves_db
 
 SCORE = 10
@@ -10,9 +11,10 @@ class Node:
         self.data = data
         self.decision = {
             'change_pkmn': False,
-            'best_pkmn': '',
-            'best_move': ''
+            'pkmn': '',
+            'move': ''
         }
+        self.score = 0
         self.ai_wins = False
         self.gameover = False
 
@@ -21,7 +23,8 @@ class Graph:
         self.root = None
         self.frontier = []
         self.depth = 0
-        self.limit = 10
+        self.minimax_depth = 4
+        self.limit = 12 * self.minimax_depth - 1 # nodes_1st_turn + total_nodes_next_turn * n
 
     def set_root_node(self, data):
         score_to_attack = 0
@@ -39,7 +42,7 @@ class Graph:
         for move in data['ai']['team'][0].moves:
             move_type = moves_db[move]['type']
             if get_effective_factor(move_type, player_types) >= 1:
-                score_to_attack += SCORE
+                score_to_attack += SCORE *2
                 if moves_db[move]['power'] > moves_db[best_move]['power']:
                     best_move = move
             else:
@@ -49,7 +52,7 @@ class Graph:
         best_pkmn = data['ai']['team'][0]
         for pkmn in data['ai']['team']:
             ai_types = pkmn.types
-            for move in self.data['player']['team'][0].moves:
+            for move in data['player']['team'][0].moves:
                 move_type = moves_db[move]['type']
                 if get_effective_factor(move_type, ai_types) < 1:
                     score_to_attack += SCORE
@@ -58,68 +61,79 @@ class Graph:
                     score_to_change_pkmn += SCORE
 
         self.root = Node(data)
-        if score_to_attack >= score_to_change_pkmn:
+        if score_to_attack >= score_to_change_pkmn or len(data['ai']['team']) == 1:
             self.root.decision['move'] = best_move
         else:
             self.root.decision['change_pkmn'] = True
             self.root.decision['pkmn'] = best_pkmn
 
     def set_states(self, node: Node, attacker, defender):
-        new_node = Node(node.data)
+        pkmn = node.data[defender]['team'][0]
+        defender_types = pkmn.types
 
-        for pkmn in node.data[defender]['team']:
-            defender_types = pkmn.types
+        for move in node.data[attacker]['team'][0].moves:
+            move_type = moves_db[move]['type']
+            move_category = moves_db[move]['type']
+            move_power = moves_db[move]['power']
+            
+            effective_factor = get_effective_factor(move_type, defender_types)
+            damage = get_damage(move_category, move_power, node.data[attacker]['team'][0], pkmn, effective_factor)
+            # pkmn.hp -= damage
 
-            for move in self.data[attacker]['team'][0].moves:
-                move_type = moves_db[move]['type']
-                move_category = moves_db[move]['type']
-                move_power = moves_db[move]['power']
-                
-                effective_factor = get_effective_factor(move_type, defender_types)
-                pkmn.hp -= get_damage(move_category, move_power, attacker, defender, effective_factor)
+            new_node = Node(node.data)
+            if effective_factor >= 2 and damage >= 70:
+                new_node.score += SCORE * 6
+            if effective_factor >= 2:
+                new_node.score += SCORE * 4
+            if damage >= pkmn.hp:
+                new_node.score += SCORE * 2
+            if len(node.data[defender]['team']) == 1 or effective_factor == 1:
+                new_node.score += SCORE
 
-                if pkmn.hp <= 0:
-                    new_node.data[defender]['team'].remove(pkmn)
+            if pkmn.hp <= 0 and len(node.data[defender]['team']) <= 1:
+                if defender == 'player':
+                    new_node.ai_wins = True
+                new_node.score += SCORE * INFINITY
+                new_node.gameover = True
 
-                if not node.data[defender]['team']:
-                    if defender == 'player':
-                        new_node.ai_wins = True
-                    new_node.gameover = True
- 
-                new_node.decision['move'] = move
-                node.children.append(new_node)
-                self.frontier.append(new_node)
+            new_node.decision['move'] = move
+            node.children.append(new_node)
+            self.frontier.append(new_node)
         
         # change pkmn
-        for def_pkmn in node.data[defender]['team']:
+        for def_pkmn in node.data[attacker]['team'][1:]:
+            if def_pkmn.hp <= def_pkmn.hp_full*0.15 and len(node.data[attacker]['team']) > 1:
+                new_node.score += SCORE * 6
+
+            new_node = Node(node.data)
             new_node.decision['change_pkmn'] = True
             new_node.decision['pkmn'] = def_pkmn
             node.children.append(new_node)
             self.frontier.append(new_node)
 
-    def explore(self, data):
-        if not self.root:
-            self.set_root_node(data)
-            self.frontier.append(self.root)
-
-        for node in self.frontier:
-            self.set_states(node, 'player', 'ai')
-            self.set_states(node, 'ai', 'player')
-            self.depth += 1
-
-    def minimax(self, position, depth, maximizing_player):
+    def minimax(self, position: Node, depth, maximizing_player):
         if depth == 0 or position.gameover:
-            return
+            return position.score
         
         if maximizing_player:
             max_eval = -INFINITY
             for child in position.children:
                 eval = self.minimax(child, depth - 1, False)
                 max_eval = max(eval, max_eval)
+                position.score -= max_eval
             return max_eval
         else:
             min_eval = INFINITY
             for child in position.children:
                 eval = self.minimax(child, depth - 1, True)
                 min_eval = min(eval, min_eval)
+                position.score += min_eval
             return min_eval
+
+    def explore(self, data, active, wait):
+        self.set_root_node(data)
+        self.set_states(self.root, active, wait)
+
+        self.minimax(self.root, self.minimax_depth, True)
+
+        return self.root
