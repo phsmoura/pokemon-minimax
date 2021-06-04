@@ -1,4 +1,4 @@
-from trainer import Trainer, Player
+from trainer import AI, Player
 from pokemon import Pokemon
 from data.pokemon_db import pokemons as pokemon_db
 
@@ -78,7 +78,7 @@ TEAM = {
 
 def main():
     player = Player(TEAM['red']['name'], TEAM['red']['team'])
-    ai = Trainer(TEAM['blue']['name'], TEAM['blue']['team'])
+    ai = AI(TEAM['blue']['name'], TEAM['blue']['team'])
 
     result = ai.main_battle(player)
     print(result)
