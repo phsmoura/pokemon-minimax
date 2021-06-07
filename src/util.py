@@ -2,14 +2,16 @@ from math import floor
 from data.type_matrix import type_matrix
 
 def get_effective_factor(atk_type:str, def_types:list) -> int:
-        atk_factor = type_matrix['header'].index(atk_type[:3])
-        effective_factor = 1
+    # print(f"atk: {atk_type}, def:{def_types}")
+    atk_factor = type_matrix['header'].index(atk_type[:3])
+    effective_factor = 1
 
-        for def_type in def_types:
-            def_factor = type_matrix['header'].index(def_type[:3])
-            effective_factor *= type_matrix['matrix'][atk_factor][def_factor]
+    for def_type in def_types:
+        def_factor = type_matrix['header'].index(def_type[:3])
+        effective_factor *= type_matrix['matrix'][atk_factor][def_factor]
 
-        return int(effective_factor)
+    # print(f"effective: {effective_factor}")
+    return effective_factor
 
 def get_damage(move_category, move_power, attacker, defender, effective_factor):
     if move_category[:3] == 'phy':
