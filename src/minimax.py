@@ -3,7 +3,7 @@ from pokemon import Pokemon
 from data.moves_db import moves as moves_db
 
 SCORE = 10
-INFINITY = 10000
+INFINITY = 100
 
 class Node:
     def __init__(self, data) -> None:
@@ -41,8 +41,8 @@ class Graph:
 
         for move in data['ai']['team'][0].moves:
             move_type = moves_db[move]['type']
-            if get_effective_factor(move_type, player_types) >= 1:
-                score_to_attack += SCORE *2
+            if get_effective_factor(move_type, player_types) >= 2:
+                score_to_attack += SCORE 
                 if moves_db[move]['power'] > moves_db[best_move]['power']:
                     best_move = move
             else:
@@ -50,7 +50,7 @@ class Graph:
 
         # choosing pkmn
         best_pkmn = data['ai']['team'][0]
-        for pkmn in data['ai']['team']:
+        for pkmn in data['ai']['team'][1:]:
             ai_types = pkmn.types
             for move in data['player']['team'][0].moves:
                 move_type = moves_db[move]['type']
@@ -118,9 +118,10 @@ class Graph:
         if maximizing_player:
             max_eval = -INFINITY
             for child in position.children:
-                eval = self.minimax(child, depth - 1, False)
+                eval = -self.minimax(child, depth - 1, False)
                 max_eval = max(eval, max_eval)
                 position.score -= max_eval
+                # print(position.score)
             return max_eval
         else:
             min_eval = INFINITY
@@ -128,6 +129,7 @@ class Graph:
                 eval = self.minimax(child, depth - 1, True)
                 min_eval = min(eval, min_eval)
                 position.score += min_eval
+                # print(position.score)
             return min_eval
 
     def explore(self, data, active, wait):
