@@ -28,7 +28,7 @@ class Trainer:
         move_chosen = moves_db[first.moves[self.current_move]]['name']
         
         effective_factor = get_effective_factor(move_type, second.types)
-        second.hp -= get_damage(move_category, move_power, first, second, effective_factor)
+        second.hp -= int(get_damage(move_category, move_power, first, second, effective_factor))
 
         print(f"{first.name} used {move_chosen} and caused {second.hp_full - second.hp} points of damage!")
         if effective_factor >= 2:
@@ -91,9 +91,9 @@ class AI(Trainer):
             }
         }
 
-        if (not self.current_state or not self.current_state.children) or \
-        (self.current_state.decision['change_pkmn'] or not opponent.current_state.decision['change_pkmn']) or \
-            self.current_pkmn.hp <= 0:
+        if (not self.current_state or not self.current_state.children) or (not opponent.current_state.children or self.current_pkmn.hp <= 0):
+        # (self.current_state.decision['change_pkmn'] or not opponent.current_state.decision['change_pkmn']) or \
+            # self.current_pkmn.hp <= 0:
             graph = Graph()
             self.current_state = graph.explore(data, 'player', 'ai')
 
@@ -115,9 +115,12 @@ class AI(Trainer):
                     opponent.current_state = child
                     break
         else:
+            best_node = opponent.current_state.children[0]
             for child in opponent.current_state.children:
-                if child.score > self.current_state.score:
-                    self.current_state = child
+                if child.score > best_node.score:
+                    best_node = child
+                    print(self.current_state.decision)
+            self.current_state = best_node
 
         # ai change pkmn - ai atk
         if self.current_state.decision['change_pkmn']:
@@ -128,6 +131,10 @@ class AI(Trainer):
             print(f"{self.name} sent out {self.current_pkmn.name}!")
         else:
             self.current_move = self.current_pkmn.moves.index(self.current_state.decision['move'])
+
+        # for i in range(len(self.current_state.children)):
+        #     print(self.current_state.children[i].score)
+        # print(self.current_state.score)
         # print(self.current_state.decision)
 
     def main_battle(self, opponent: Player):
