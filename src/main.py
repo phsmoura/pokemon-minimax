@@ -48,7 +48,7 @@ TEAM = {
                 [ 
                     pokemon_db['blastoise']['moves'][pokemon_db['blastoise']['moves'].index('ice-beam')],
                     pokemon_db['blastoise']['moves'][pokemon_db['blastoise']['moves'].index('hydro-pump')],
-                    pokemon_db['blastoise']['moves'][pokemon_db['blastoise']['moves'].index('bite')],
+                    pokemon_db['blastoise']['moves'][pokemon_db['blastoise']['moves'].index('earthquake')],
                     pokemon_db['blastoise']['moves'][pokemon_db['blastoise']['moves'].index('blizzard')]
                 ]
             ),
